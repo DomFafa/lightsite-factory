@@ -29,6 +29,15 @@ Hard requirements:
   This calculator does not provide financial, investment, tax, or legal advice.
   Results are hypothetical and not guaranteed.
 
+Golden sample quality lessons:
+- Do not turn any golden sample into a fixed template; apply these as general quality rules.
+- The first viewport must feel tool-first, not marketing-first.
+- Avoid duplicate local-only or privacy cues; one clear cue is enough.
+- Use a coherent hero grid that avoids large empty columns.
+- Keep the H1 and subtitle in one visual text group.
+- Section labels should feel like integrated UI tokens/cards, not generic uppercase badges.
+- Calculator pages need a strong primary result area that is visually connected to the inputs.
+
 401(k) formula:
 For each projected year:
 salary = salary * (1 + salaryIncrease)

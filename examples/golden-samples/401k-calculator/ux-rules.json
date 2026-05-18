@@ -1,0 +1,32 @@
+{
+  "global_rules": [
+    "First viewport must feel tool-first, not marketing-first.",
+    "Avoid duplicated trust/privacy cues; one clear local-only cue is enough.",
+    "Hero layout must use a coherent grid and avoid large empty columns.",
+    "H1 and subtitle should belong to one visual text group.",
+    "Section labels should feel like integrated UI tokens/cards, not generic uppercase badges.",
+    "UI tokens such as section pills and privacy pills should be compact and must not compete with the primary tool.",
+    "Manual visual edits must not automatically trigger QA unless the user explicitly asks."
+  ],
+  "calculator_family_rules": [
+    "Calculator pages need a strong primary result area.",
+    "Inputs and outputs should be visually connected.",
+    "Supporting sections should share one consistent section label system.",
+    "Reset and helper controls should be visually smaller than primary results and form headings.",
+    "Helper content should not push the real calculator too far down."
+  ],
+  "sample_specific_rules": [
+    "Use \"401(k) Calculator\" as the main H1.",
+    "Keep one local-only cue: \"Runs locally in your browser. No sign-up. No personal data stored.\"",
+    "Remove duplicate \"Local-only retirement estimate\" hero badge.",
+    "Use a lightweight right-side support card when left-aligning the hero text would otherwise leave empty space.",
+    "Use numbered pill/card section labels: 01 Your assumptions, 02 Projection table, 03 Plain-English method, 04 Quick guide, 05 Questions."
+  ],
+  "confirmed_sizing_rules": [
+    "Use calmer H1 sizing around clamp(2rem, 3.7vw, 3.35rem) instead of oversized marketing-hero scale.",
+    "Use compact numbered section pills around 0.74rem text with 0.24rem 0.48rem padding, small dots, and light shadows.",
+    "Use a compact local-only privacy pill around 0.88rem text with reduced padding and a lighter shadow.",
+    "Use a smaller reset button around 0.9rem text and 38px minimum height so it does not overpower the form header.",
+    "Keep financial output numbers prominent; shrink headings, pills, and utility controls before shrinking primary result values."
+  ]
+}

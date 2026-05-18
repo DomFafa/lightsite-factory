@@ -17,3 +17,8 @@ Fail the review if:
 - the page looks like a default browser form
 - the page looks like an admin dashboard
 - the page is a pure marketing landing page
+- duplicate privacy or local-only cues appear in the same first-screen area
+- the H1 and subtitle do not visually belong to one group
+- the hero has large meaningless empty space
+- section labels look like mechanical uppercase badges instead of unified UI tokens/cards
+- the hero pushes the real calculator too low on the page

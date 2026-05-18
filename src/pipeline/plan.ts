@@ -3,7 +3,7 @@ import path from "node:path";
 import { getRunPaths, siteIdFromKeyword } from "../run/run-paths";
 import { ensureDir, writeJson } from "../utils/json";
 import { logger } from "../utils/logger";
-import { isCanvasEditorTool } from "../utils/tool-classification";
+import { inferToolFamily } from "../tooling/tool-family";
 
 export type PlanComplexity = "simple" | "medium" | "complex";
 
@@ -23,8 +23,9 @@ export type ToolPlan = {
 export function inferToolPlan(keyword: string): ToolPlan {
   const siteId = siteIdFromKeyword(keyword);
   const lower = keyword.toLowerCase();
+  const family = inferToolFamily({ keyword });
 
-  if (isCanvasEditorTool({ keyword })) {
+  if (family.primary === "canvas-editor") {
     return {
       keyword,
       site_id: siteId,
@@ -60,6 +61,22 @@ export function inferToolPlan(keyword: string): ToolPlan {
         "Canvas tools can burn tokens and still miss edge-case editing behavior.",
         "Keep the first version local-only and avoid accounts, cloud saves, and backend APIs."
       ]
+    };
+  }
+
+  if (family.primary === "generator-tool") {
+    return {
+      keyword,
+      site_id: siteId,
+      inferred_tool_type: "generator-tool",
+      complexity: "simple",
+      recommended_v1_scope:
+        "Build a focused local generator with clear inputs, one primary generate action, result list/cards, copy/export actions, validation, and optional seed when useful.",
+      must_have_interactions: ["generator inputs", "generate action", "visible result output"],
+      optional_interactions: ["copy results", "download/export", "seed", "filters"],
+      seo_sections: ["tool", "how it works", "common uses", "FAQ"],
+      competitor_research_needed: false,
+      risk_notes: ["Simple generator tools can usually continue through design-first generation."]
     };
   }
 

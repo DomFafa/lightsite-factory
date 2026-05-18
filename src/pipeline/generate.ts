@@ -13,6 +13,7 @@ import {
   planningArtifactsJsonSchema
 } from "../llm/schemas";
 import { createDesignSeed } from "../design/design-seed";
+import { loadGoldenLessons } from "../memory/load-golden-lessons";
 
 export type GenerateOptions = {
   keyword: string;
@@ -29,6 +30,7 @@ export async function generateSite(options: GenerateOptions): Promise<string> {
   logger.info(`Run folder: ${runDir}`);
   const indexnow = ensureIndexNowConfig(run.site_id, cwd);
   const designSeed = createDesignSeed(run.keyword);
+  const initialGoldenLessons = loadGoldenLessons({ keyword: run.keyword, cwd });
 
   const planningPrompt = readPrompt("generate-brief.md", cwd);
   const planning = await requestStructuredJson({
@@ -48,6 +50,7 @@ export async function generateSite(options: GenerateOptions): Promise<string> {
             domain: run.domain,
             language: run.language,
             design_seed: designSeed,
+            golden_quality_lessons: initialGoldenLessons,
             required_401k_inputs: [
               "current_age",
               "retirement_age",
@@ -82,6 +85,11 @@ export async function generateSite(options: GenerateOptions): Promise<string> {
   writeJson(paths.uiFingerprintJson, planning.ui_fingerprint);
 
   const sitePrompt = readPrompt("generate-site.md", cwd);
+  const goldenLessons = loadGoldenLessons({
+    keyword: run.keyword,
+    siteType: planning.brief.site_type,
+    cwd
+  });
   const generatedSite = await requestStructuredJson({
     schemaName: "generated site",
     jsonSchema: generatedSiteJsonSchema,
@@ -101,6 +109,7 @@ export async function generateSite(options: GenerateOptions): Promise<string> {
             seo_plan: planning.seo_plan,
             tool_spec: planning.tool_spec,
             ui_fingerprint: planning.ui_fingerprint,
+            golden_quality_lessons: goldenLessons,
             indexnow: {
               key_file_is_written_by_system: indexnow.key_file,
               do_not_generate_key_file: true

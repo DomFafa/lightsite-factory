@@ -72,3 +72,26 @@ test("reports exactly which required disclaimer text is missing", () => {
     result.issues.includes("Missing required disclaimer: Educational estimate only.")
   );
 });
+
+test("allows noindex for draft pages", () => {
+  const result = auditSeo({
+    html: validHtml.replace("<head>", '<head><meta name="robots" content="noindex,nofollow">'),
+    indexingState: "draft",
+    robots: "User-agent: *",
+    sitemap: "<urlset><url><loc>https://401k-calculator.net/</loc></url></urlset>"
+  });
+
+  assert.equal(result.checks.draft_indexing_allowed, true);
+});
+
+test("fails noindex for published pages", () => {
+  const result = auditSeo({
+    html: validHtml.replace("<head>", '<head><meta name="robots" content="noindex,nofollow">'),
+    indexingState: "published",
+    robots: "User-agent: *",
+    sitemap: "<urlset><url><loc>https://401k-calculator.net/</loc></url></urlset>"
+  });
+
+  assert.equal(result.passed, false);
+  assert.equal(result.checks.no_noindex_when_published, false);
+});

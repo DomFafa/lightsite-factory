@@ -62,10 +62,18 @@ program
   .argument("<runPath>")
   .option("--force", "Deploy even if QA failed")
   .option("--no-indexnow", "Skip IndexNow submit after deploy")
-  .action(async (runPath: string, options: { force?: boolean; indexnow?: boolean }) => {
+  .option("--bind-domain", "Bind run.json domain to Cloudflare Pages and ensure DNS")
+  .option("--publish", "Switch site to published indexing state before deploy")
+  .option("--replace-dns", "Replace conflicting Cloudflare DNS records during domain binding")
+  .option("--reason <reason>", "Record why this deploy was allowed")
+  .action(async (runPath: string, options: { force?: boolean; indexnow?: boolean; bindDomain?: boolean; publish?: boolean; replaceDns?: boolean; reason?: string }) => {
     await deployRun(runPath, {
       force: options.force,
-      indexnow: options.indexnow
+      indexnow: options.indexnow,
+      bindDomain: options.bindDomain,
+      publish: options.publish,
+      replaceDns: options.replaceDns,
+      reason: options.reason
     });
   });
 

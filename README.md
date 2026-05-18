@@ -63,7 +63,7 @@ pnpm repair-prompt runs/401k-calculator
 Deploy:
 
 ```bash
-pnpm deploy runs/401k-calculator
+pnpm run deploy -- runs/401k-calculator
 ```
 
 Submit IndexNow separately:
@@ -80,7 +80,58 @@ pnpm indexnow runs/401k-calculator
 - The factory itself is TypeScript.
 - V1 only proves the `401k calculator` golden path.
 - Google Search Console stays manual.
-- IndexNow submits automatically after successful deploy unless `--no-indexnow` is used.
+- IndexNow submits automatically after successful published deploy unless `--no-indexnow` is used.
+
+## Golden sample memory
+
+Golden sample lessons live in `examples/golden-samples/*/ux-rules.json`.
+
+During `generate`, lightsite-factory reads those rules and injects `golden_quality_lessons` into the OpenAI planning and site-generation prompts:
+
+- All generated sites receive `global_rules`.
+- Calculator sites receive `calculator_family_rules`.
+- The 401k sample-specific rules only apply to matching `401k calculator` keywords.
+- Confirmed sizing rules are limited to calculator-family or matching sample use.
+
+Golden samples are memory, not templates. Future sites should use the quality lessons without directly copying the 401k layout.
+
+## Auto domain binding and DNS
+
+Cloudflare deploy can optionally bind the run domain and ensure DNS:
+
+```bash
+pnpm run deploy -- runs/401k-calculator --bind-domain
+pnpm run deploy -- runs/401k-calculator --bind-domain --publish
+pnpm run deploy -- runs/401k-calculator --bind-domain --publish --replace-dns
+```
+
+The domain must already be added to Cloudflare. lightsite-factory does not buy domains and does not add Google Search Console or Bing Webmaster automatically.
+
+By default, existing conflicting DNS records are not overwritten. Use `--replace-dns` only when you intentionally want Cloudflare DNS records replaced.
+
+## Draft vs published indexing state
+
+Deploys are draft by default:
+
+- `index.html` gets `noindex,nofollow`.
+- `robots.txt` stays crawlable with `Allow: /`.
+- This prevents unfinished staging or preview deployments from being indexed.
+
+Only `--publish` unlocks indexing:
+
+- `index.html` gets `index,follow`.
+- `canonical` and `sitemap.xml` are set to the official run domain.
+- `robots.txt` uses `User-agent: *` and `Allow: /`.
+- IndexNow can run after deploy when the official domain key file is reachable.
+
+Manual UI edits do not automatically trigger QA. If the owner approves the UI and you want to deploy without rerunning QA:
+
+```bash
+pnpm run deploy -- runs/<site-id> --force --reason "manual UI approved by owner"
+pnpm run deploy -- runs/<site-id> --bind-domain --publish --force --reason "manual UI approved by owner"
+```
+
+Run `pnpm qa` only when explicitly requested.
 
 ## Google Search Console
 
@@ -101,9 +152,10 @@ pnpm generate "401k calculator" --domain 401k-calculator.net --deploy
 pnpm qa runs/401k-calculator
 pnpm repair-prompt runs/401k-calculator
 pnpm preview runs/401k-calculator
-pnpm deploy runs/401k-calculator
-pnpm deploy runs/401k-calculator --no-indexnow
-pnpm deploy runs/401k-calculator --force
+pnpm run deploy -- runs/401k-calculator
+pnpm run deploy -- runs/401k-calculator --no-indexnow
+pnpm run deploy -- runs/401k-calculator --force
+pnpm run deploy -- runs/401k-calculator --bind-domain --publish
 pnpm indexnow runs/401k-calculator
 pnpm typecheck
 pnpm test

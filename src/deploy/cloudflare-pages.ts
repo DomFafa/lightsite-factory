@@ -6,9 +6,15 @@ const execFileAsync = promisify(execFile);
 
 export type CloudflareDeployResult = {
   deployment_url?: string;
+  project_name: string;
   stdout: string;
   stderr: string;
 };
+
+export function getCloudflarePagesProjectName(siteId: string): string {
+  const normalized = siteId.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
+  return /^[a-z]/.test(normalized) ? normalized : `lightsite-${normalized}`;
+}
 
 export async function deployToCloudflarePages(args: {
   siteDir: string;
@@ -19,29 +25,60 @@ export async function deployToCloudflarePages(args: {
   requireEnv("CLOUDFLARE_ACCOUNT_ID");
   requireEnv("CLOUDFLARE_API_TOKEN");
 
-  const { stdout, stderr } = await execFileAsync(
+  const projectName = getCloudflarePagesProjectName(args.projectName);
+  try {
+    const result = await runWranglerDeploy(args.siteDir, projectName, args.cwd);
+    return {
+      deployment_url: extractDeploymentUrl(`${result.stdout}\n${result.stderr}`),
+      project_name: projectName,
+      stdout: result.stdout,
+      stderr: result.stderr
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!/Project not found|8000007/i.test(message)) throw error;
+    await execFileAsync(
+      "pnpm",
+      ["exec", "wrangler", "pages", "project", "create", projectName, "--production-branch", "main"],
+      {
+        cwd: args.cwd ?? process.cwd(),
+        env: process.env,
+        maxBuffer: 1024 * 1024 * 4
+      }
+    );
+    const result = await runWranglerDeploy(args.siteDir, projectName, args.cwd);
+    return {
+      deployment_url: extractDeploymentUrl(`${result.stdout}\n${result.stderr}`),
+      project_name: projectName,
+      stdout: result.stdout,
+      stderr: result.stderr
+    };
+  }
+}
+
+async function runWranglerDeploy(
+  siteDir: string,
+  projectName: string,
+  cwd?: string
+): Promise<{ stdout: string; stderr: string }> {
+  return execFileAsync(
     "pnpm",
     [
       "exec",
       "wrangler",
       "pages",
       "deploy",
-      args.siteDir,
+      siteDir,
       "--project-name",
-      args.projectName
+      projectName,
+      "--commit-dirty=true"
     ],
     {
-      cwd: args.cwd ?? process.cwd(),
+      cwd: cwd ?? process.cwd(),
       env: process.env,
       maxBuffer: 1024 * 1024 * 4
     }
   );
-
-  return {
-    deployment_url: extractDeploymentUrl(`${stdout}\n${stderr}`),
-    stdout,
-    stderr
-  };
 }
 
 function extractDeploymentUrl(output: string): string | undefined {

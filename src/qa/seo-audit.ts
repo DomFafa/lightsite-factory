@@ -13,6 +13,7 @@ export function auditSeo(args: {
   domain?: string;
   robots?: string;
   sitemap?: string;
+  indexingState?: "draft" | "published";
 }): SeoAuditResult {
   const checks: Record<string, boolean> = {};
   const issues: string[] = [];
@@ -39,6 +40,14 @@ export function auditSeo(args: {
   checks.faq = /faq/i.test(args.html);
   const missingDisclaimers = findMissingDisclaimers(args.html);
   checks.required_disclaimers = missingDisclaimers.length === 0;
+  const hasNoindex = /<meta\s+[^>]*name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(
+    args.html
+  );
+  if (args.indexingState === "published") {
+    checks.no_noindex_when_published = !hasNoindex;
+  } else if (args.indexingState === "draft") {
+    checks.draft_indexing_allowed = true;
+  }
 
   const jsonLdTypes = extractJsonLdTypes(args.html, issues);
   checks.software_application_json_ld = jsonLdTypes.includes("SoftwareApplication");
@@ -80,11 +89,15 @@ function findMissingDisclaimers(html: string): string[] {
   return required.filter((phrase) => !text.toLowerCase().includes(phrase.toLowerCase()));
 }
 
-export function auditSeoFiles(siteDir: string, domain?: string): SeoAuditResult {
+export function auditSeoFiles(
+  siteDir: string,
+  domain?: string,
+  indexingState?: "draft" | "published"
+): SeoAuditResult {
   const html = readIfExists(path.join(siteDir, "index.html"));
   const robots = readIfExists(path.join(siteDir, "robots.txt"));
   const sitemap = readIfExists(path.join(siteDir, "sitemap.xml"));
-  return auditSeo({ html, robots, sitemap, domain });
+  return auditSeo({ html, robots, sitemap, domain, indexingState });
 }
 
 function extractJsonLdTypes(html: string, issues: string[]): string[] {

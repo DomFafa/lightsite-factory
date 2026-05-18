@@ -16,6 +16,7 @@ export type RunPaths = {
   qaDir: string;
   repairDir: string;
   deployJson: string;
+  domainBindJson: string;
   indexnowSubmitJson: string;
 };
 
@@ -38,6 +39,7 @@ export function getRunPaths(runPathOrSiteId: string, cwd = process.cwd()): RunPa
     qaDir: path.join(runDir, "qa"),
     repairDir: path.join(runDir, "repair"),
     deployJson: path.join(runDir, "deploy.json"),
+    domainBindJson: path.join(runDir, "domain-bind.json"),
     indexnowSubmitJson: path.join(runDir, "indexnow-submit.json")
   };
 }

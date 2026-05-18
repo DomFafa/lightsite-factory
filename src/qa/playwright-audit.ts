@@ -52,7 +52,7 @@ export async function runPlaywrightAudit(
     });
 
     const behavior = await runBehaviorAudit(page);
-    const seo = auditSeoFiles(paths.siteDir, run.domain);
+    const seo = auditSeoFiles(paths.siteDir, run.domain, run.indexing_state);
 
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
     await mobile.goto(server.url, { waitUntil: "networkidle" });

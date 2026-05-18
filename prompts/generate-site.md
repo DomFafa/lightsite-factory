@@ -30,7 +30,9 @@ Hard requirements:
   Results are hypothetical and not guaranteed.
 
 Golden sample quality lessons:
+- Use `golden_quality_lessons` from the input as quality guidance when provided.
 - Do not turn any golden sample into a fixed template; apply these as general quality rules.
+- Apply sample_specific_rules only when the keyword or site type clearly matches that sample; do not let 401k-specific rules leak into unrelated tools.
 - The first viewport must feel tool-first, not marketing-first.
 - Avoid duplicate local-only or privacy cues; one clear cue is enough.
 - Use a coherent hero grid that avoids large empty columns.

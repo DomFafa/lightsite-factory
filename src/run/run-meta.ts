@@ -26,6 +26,7 @@ export const RunMetaSchema = z.object({
   language: z.string().min(2),
   created_at: z.string().datetime(),
   status: z.string().min(1),
+  indexing_state: z.enum(["draft", "published"]).optional(),
   version: z.string().min(1)
 });
 

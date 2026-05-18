@@ -10,6 +10,7 @@ import { runBehaviorAudit } from "./behavior-audit";
 import { auditScreenshots } from "./screenshot-audit";
 import { auditIndexNowReadiness } from "./indexnow-audit";
 import { runVisionReview } from "./vision-review";
+import { is401kCalculator } from "../utils/tool-classification";
 
 export type QaReport = {
   status: "passed" | "failed";
@@ -45,22 +46,32 @@ export async function runPlaywrightAudit(
     const noHorizontalScroll = await page.evaluate(
       () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
     );
-    const primaryResultVisible = await page.locator("#projected-balance").isVisible();
+    const is401k = is401kCalculator(run.keyword) || is401kCalculator(run.site_id);
+    const primaryToolVisible = is401k
+      ? await page.locator("#projected-balance").isVisible()
+      : await hasVisibleToolControl(page);
     await page.screenshot({
       path: path.join(paths.screenshotsDir, "desktop.png"),
       fullPage: true
     });
 
-    const behavior = await runBehaviorAudit(page);
-    const seo = auditSeoFiles(paths.siteDir, run.domain, run.indexing_state);
+    const behavior = await runBehaviorAudit(page, {
+      keyword: run.keyword,
+      siteId: run.site_id
+    });
+    const seo = auditSeoFiles(paths.siteDir, run.domain, run.indexing_state, {
+      keyword: run.keyword
+    });
 
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
     await mobile.goto(server.url, { waitUntil: "networkidle" });
     const mobileNoHorizontalScroll = await mobile.evaluate(
       () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
     );
-    const mobileInputVisible = await mobile.locator("#current-age").isVisible();
-    const mobileResultVisible = await mobile.locator("#projected-balance").isVisible();
+    const mobileToolControlVisible = is401k
+      ? (await mobile.locator("#current-age").isVisible()) &&
+        (await mobile.locator("#projected-balance").isVisible())
+      : await hasVisibleToolControl(mobile);
     await mobile.screenshot({
       path: path.join(paths.screenshotsDir, "mobile.png"),
       fullPage: true
@@ -86,9 +97,15 @@ export async function runPlaywrightAudit(
       page_opens: opens,
       no_desktop_horizontal_scroll: noHorizontalScroll,
       no_mobile_horizontal_scroll: mobileNoHorizontalScroll,
-      primary_result_visible: primaryResultVisible,
-      mobile_input_visible: mobileInputVisible,
-      mobile_result_visible: mobileResultVisible,
+      ...(is401k
+        ? {
+            primary_result_visible: primaryToolVisible,
+            mobile_401k_tool_visible: mobileToolControlVisible
+          }
+        : {
+            primary_tool_control_visible: primaryToolVisible,
+            mobile_tool_control_visible: mobileToolControlVisible
+          }),
       no_serious_console_errors: consoleErrors.length === 0
     };
 
@@ -131,6 +148,15 @@ export async function runPlaywrightAudit(
     if (browser) await browser.close();
     await server.close();
   }
+}
+
+async function hasVisibleToolControl(page: import("playwright").Page): Promise<boolean> {
+  const controls = page.locator("button,input,select,textarea,canvas");
+  const count = await controls.count();
+  for (let index = 0; index < count; index++) {
+    if (await controls.nth(index).isVisible().catch(() => false)) return true;
+  }
+  return false;
 }
 
 function failedChecks(checks: Record<string, boolean>, prefix: string): string[] {

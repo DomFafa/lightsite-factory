@@ -5,6 +5,7 @@
   "packageManager": "pnpm@10.33.2",
   "type": "module",
   "scripts": {
+    "plan": "tsx src/cli.ts plan",
     "generate": "tsx src/cli.ts generate",
     "qa": "tsx src/cli.ts qa",
     "repair-prompt": "tsx src/cli.ts repair-prompt",

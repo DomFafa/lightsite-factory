@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { isCanvasEditorTool, isFinancialTool, isMinecraftFanTool } from "../utils/tool-classification";
 
 export type SeoAuditResult = {
   passed: boolean;
@@ -14,6 +15,8 @@ export function auditSeo(args: {
   robots?: string;
   sitemap?: string;
   indexingState?: "draft" | "published";
+  keyword?: string;
+  siteType?: string;
 }): SeoAuditResult {
   const checks: Record<string, boolean> = {};
   const issues: string[] = [];
@@ -38,7 +41,12 @@ export function auditSeo(args: {
   checks.semantic_main = /<main\b/i.test(args.html);
   checks.semantic_section = /<section\b/i.test(args.html);
   checks.faq = /faq/i.test(args.html);
-  const missingDisclaimers = findMissingDisclaimers(args.html);
+  const disclaimerPolicy = getDisclaimerPolicy({
+    html: args.html,
+    keyword: args.keyword,
+    siteType: args.siteType
+  });
+  const missingDisclaimers = findMissingDisclaimers(args.html, disclaimerPolicy);
   checks.required_disclaimers = missingDisclaimers.length === 0;
   const hasNoindex = /<meta\s+[^>]*name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(
     args.html
@@ -78,26 +86,75 @@ export function auditSeo(args: {
   };
 }
 
-function findMissingDisclaimers(html: string): string[] {
-  const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  const required = [
-    "Educational estimate only.",
-    "financial, investment, tax, or legal advice",
-    "Results are hypothetical and not guaranteed"
-  ];
+export type SeoDisclaimerPolicy = "financial" | "minecraft_fan_tool" | "generic";
 
-  return required.filter((phrase) => !text.toLowerCase().includes(phrase.toLowerCase()));
+export function getDisclaimerPolicy(args: {
+  html: string;
+  keyword?: string;
+  siteType?: string;
+}): SeoDisclaimerPolicy {
+  if (isMinecraftFanTool({ keyword: args.keyword })) return "minecraft_fan_tool";
+  if (isFinancialTool(args)) return "financial";
+  if (isMinecraftFanTool(args)) return "minecraft_fan_tool";
+  return "generic";
+}
+
+function findMissingDisclaimers(html: string, policy: SeoDisclaimerPolicy): string[] {
+  const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const required = requiredDisclaimerMatchers(policy, html);
+
+  return required
+    .filter((item) => !item.pattern.test(text))
+    .map((item) => item.label);
+}
+
+function requiredDisclaimerMatchers(
+  policy: SeoDisclaimerPolicy,
+  html: string
+): Array<{ label: string; pattern: RegExp }> {
+  if (policy === "financial") {
+    return [
+      { label: "Educational estimate only.", pattern: /educational estimate only\./i },
+      {
+        label: "financial, investment, tax, or legal advice",
+        pattern: /financial,\s*investment,\s*tax,\s*or\s*legal\s*advice/i
+      },
+      {
+        label: "Results are hypothetical and not guaranteed",
+        pattern: /results are hypothetical and not guaranteed/i
+      }
+    ];
+  }
+
+  if (policy === "minecraft_fan_tool") {
+    return [
+      { label: "unofficial", pattern: /unofficial/i },
+      { label: "not affiliated / not endorsed", pattern: /not affiliated|not endorsed/i },
+      { label: "Mojang or Microsoft", pattern: /mojang|microsoft/i },
+      ...(isCanvasEditorTool({ html })
+        ? [
+            {
+              label: "local/browser-only file handling",
+              pattern: /local|browser|no upload|not uploaded/i
+            }
+          ]
+        : [])
+    ];
+  }
+
+  return [];
 }
 
 export function auditSeoFiles(
   siteDir: string,
   domain?: string,
-  indexingState?: "draft" | "published"
+  indexingState?: "draft" | "published",
+  context: { keyword?: string; siteType?: string } = {}
 ): SeoAuditResult {
   const html = readIfExists(path.join(siteDir, "index.html"));
   const robots = readIfExists(path.join(siteDir, "robots.txt"));
   const sitemap = readIfExists(path.join(siteDir, "sitemap.xml"));
-  return auditSeo({ html, robots, sitemap, domain, indexingState });
+  return auditSeo({ html, robots, sitemap, domain, indexingState, ...context });
 }
 
 function extractJsonLdTypes(html: string, issues: string[]): string[] {

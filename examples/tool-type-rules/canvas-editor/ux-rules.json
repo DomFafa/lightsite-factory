@@ -1,0 +1,14 @@
+{
+  "tool_type": "canvas-editor",
+  "rules": [
+    "Visible canvas or workspace.",
+    "Toolbar with draw, erase, fill, and pick when relevant.",
+    "Color picker when the tool edits colors or pixels.",
+    "Undo and redo when editing state can change.",
+    "Import and export/download when the tool handles files.",
+    "Preview panel when a transformed output or character/asset preview is useful.",
+    "Local-only file handling copy.",
+    "Mobile fallback warning if precise editing is difficult on small screens."
+  ],
+  "template_warning": "Use these expectations as quality guidance only. Do not copy a fixed canvas editor layout."
+}

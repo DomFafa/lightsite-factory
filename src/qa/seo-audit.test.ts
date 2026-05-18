@@ -29,6 +29,7 @@ const validHtml = `<!doctype html>
 test("checks title, meta, canonical, H1, and JSON-LD", () => {
   const result = auditSeo({
     html: validHtml,
+    keyword: "401k calculator",
     domain: "401k-calculator.net",
     robots: "User-agent: *\nAllow: /\n",
     sitemap: `<urlset><url><loc>https://401k-calculator.net/</loc></url></urlset>`
@@ -42,6 +43,30 @@ test("checks title, meta, canonical, H1, and JSON-LD", () => {
   assert.equal(result.checks.software_application_json_ld, true);
   assert.equal(result.checks.faq_page_json_ld, true);
   assert.equal(result.checks.required_disclaimers, true);
+});
+
+test("generic non-financial tools do not require financial disclaimer", () => {
+  const genericHtml = `<!doctype html>
+  <html>
+    <head>
+      <title>Word Counter</title>
+      <meta name="description" content="Count words locally.">
+      <link rel="canonical" href="https://example.com/">
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication"}</script>
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[]}</script>
+    </head>
+    <body><main><section><h1>Word Counter</h1><p>FAQ</p><textarea></textarea></section></main></body>
+  </html>`;
+
+  const result = auditSeo({
+    html: genericHtml,
+    keyword: "word counter",
+    robots: "User-agent: *",
+    sitemap: "<urlset><url><loc>https://example.com/</loc></url></urlset>"
+  });
+
+  assert.equal(result.checks.required_disclaimers, true);
+  assert.equal(result.passed, true);
 });
 
 test("finds missing SEO items", () => {
@@ -62,6 +87,7 @@ test("finds missing SEO items", () => {
 test("reports exactly which required disclaimer text is missing", () => {
   const result = auditSeo({
     html: validHtml.replace("Educational estimate only.", ""),
+    keyword: "401k calculator",
     robots: "User-agent: *",
     sitemap: "<urlset><url><loc>https://401k-calculator.net/</loc></url></urlset>"
   });
@@ -71,6 +97,52 @@ test("reports exactly which required disclaimer text is missing", () => {
   assert.ok(
     result.issues.includes("Missing required disclaimer: Educational estimate only.")
   );
+});
+
+test("minecraft fan tools require unofficial Mojang or Microsoft and local copy", () => {
+  const minecraftHtml = `<!doctype html>
+  <html>
+    <head>
+      <title>Minecraft Skin Maker</title>
+      <meta name="description" content="Make a Minecraft skin locally.">
+      <link rel="canonical" href="https://example.com/">
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication"}</script>
+      <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[]}</script>
+    </head>
+    <body>
+      <main>
+        <section>
+          <h1>Minecraft Skin Maker</h1>
+          <canvas></canvas>
+          <p>FAQ</p>
+          <p>This unofficial fan-made tool is not affiliated with Mojang or Microsoft. It runs locally in your browser and files are not uploaded.</p>
+        </section>
+      </main>
+    </body>
+  </html>`;
+
+  const result = auditSeo({
+    html: minecraftHtml,
+    keyword: "minecraft skin maker",
+    robots: "User-agent: *",
+    sitemap: "<urlset><url><loc>https://example.com/</loc></url></urlset>"
+  });
+
+  assert.equal(result.passed, true);
+  assert.equal(result.checks.required_disclaimers, true);
+});
+
+test("minecraft fan tools report missing brand disclaimer details", () => {
+  const result = auditSeo({
+    html: validHtml.replace(/401\(k\) Calculator/g, "Minecraft Skin Maker"),
+    keyword: "minecraft skin maker",
+    robots: "User-agent: *",
+    sitemap: "<urlset><url><loc>https://example.com/</loc></url></urlset>"
+  });
+
+  assert.equal(result.passed, false);
+  assert.ok(result.issues.includes("Missing required disclaimer: unofficial"));
+  assert.ok(result.issues.includes("Missing required disclaimer: Mojang or Microsoft"));
 });
 
 test("allows noindex for draft pages", () => {

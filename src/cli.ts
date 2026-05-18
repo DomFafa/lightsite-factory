@@ -6,6 +6,7 @@ import { createRepairPrompt } from "./pipeline/repair-prompt";
 import { previewRun } from "./pipeline/preview";
 import { deployRun } from "./pipeline/deploy";
 import { submitRunIndexNow } from "./pipeline/indexnow";
+import { writePlan } from "./pipeline/plan";
 import { logger } from "./utils/logger";
 import { loadEnv } from "./utils/env";
 
@@ -17,6 +18,13 @@ program
   .name("lightsite-factory")
   .description("Lightweight AI static tool-site generator")
   .version("0.1.0");
+
+program
+  .command("plan")
+  .argument("<keyword>")
+  .action((keyword: string) => {
+    writePlan(keyword);
+  });
 
 program
   .command("generate")
@@ -64,14 +72,16 @@ program
   .option("--no-indexnow", "Skip IndexNow submit after deploy")
   .option("--bind-domain", "Bind run.json domain to Cloudflare Pages and ensure DNS")
   .option("--publish", "Switch site to published indexing state before deploy")
+  .option("--draft", "Switch site back to draft noindex indexing state before deploy")
   .option("--replace-dns", "Replace conflicting Cloudflare DNS records during domain binding")
   .option("--reason <reason>", "Record why this deploy was allowed")
-  .action(async (runPath: string, options: { force?: boolean; indexnow?: boolean; bindDomain?: boolean; publish?: boolean; replaceDns?: boolean; reason?: string }) => {
+  .action(async (runPath: string, options: { force?: boolean; indexnow?: boolean; bindDomain?: boolean; publish?: boolean; draft?: boolean; replaceDns?: boolean; reason?: string }) => {
     await deployRun(runPath, {
       force: options.force,
       indexnow: options.indexnow,
       bindDomain: options.bindDomain,
       publish: options.publish,
+      draft: options.draft,
       replaceDns: options.replaceDns,
       reason: options.reason
     });

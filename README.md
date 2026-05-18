@@ -4,7 +4,7 @@
 
 `lightsite-factory` is a lightweight AI static tool-site generator. You enter a keyword, it generates a polished static SEO tool site, runs real-browser Playwright QA, creates a Codex repair prompt, deploys to Cloudflare Pages, and submits updated URLs through IndexNow.
 
-V1 proves one golden path: `401k calculator` for `401k-calculator.net`.
+Phase 1 proved one golden path: `401k calculator` for `401k-calculator.net`. New tool types should reuse the quality lessons without inheriting 401k-specific fields, formulas, or disclaimers.
 
 ## Quick start
 
@@ -39,6 +39,7 @@ Model requirements:
 Generate:
 
 ```bash
+pnpm plan "minecraft skin maker"
 pnpm generate "401k calculator" --domain 401k-calculator.net
 ```
 
@@ -78,7 +79,8 @@ pnpm indexnow runs/401k-calculator
 - Do not put API keys in config, prompts, generated run folders, or source code.
 - Generated websites are plain HTML, CSS, and vanilla JavaScript.
 - The factory itself is TypeScript.
-- V1 only proves the `401k calculator` golden path.
+- The `401k calculator` golden path is sample-specific memory, not a global template.
+- Non-401k tools use their own `tool_spec` and generic QA.
 - Google Search Console stays manual.
 - IndexNow submits automatically after successful published deploy unless `--no-indexnow` is used.
 
@@ -94,6 +96,18 @@ During `generate`, lightsite-factory reads those rules and injects `golden_quali
 - Confirmed sizing rules are limited to calculator-family or matching sample use.
 
 Golden samples are memory, not templates. Future sites should use the quality lessons without directly copying the 401k layout.
+
+## Plan preflight
+
+Use `plan` before spending generation tokens on complex tools:
+
+```bash
+pnpm plan "minecraft skin maker"
+```
+
+This writes `runs/<site-id>/plan.json` and `runs/<site-id>/plan.md`. It is a local heuristic only; it does not call OpenAI and does not block `generate`.
+
+Complex tools such as canvas editors, image editors, and video editors will warn that V1 scope should be confirmed before full generation.
 
 ## Auto domain binding and DNS
 
@@ -117,18 +131,21 @@ Deploys are draft by default:
 - `robots.txt` stays crawlable with `Allow: /`.
 - This prevents unfinished staging or preview deployments from being indexed.
 
-Only `--publish` unlocks indexing:
+Only `--publish` unlocks indexing for the first official release:
 
 - `index.html` gets `index,follow`.
 - `canonical` and `sitemap.xml` are set to the official run domain.
 - `robots.txt` uses `User-agent: *` and `Allow: /`.
 - IndexNow can run after deploy when the official domain key file is reachable.
 
+Once `run.json.indexing_state` is `published`, later deploys keep the site published by default. Use `--draft` only when you intentionally want to put a published site back into `noindex,nofollow`.
+
 Manual UI edits do not automatically trigger QA. If the owner approves the UI and you want to deploy without rerunning QA:
 
 ```bash
-pnpm run deploy -- runs/<site-id> --force --reason "manual UI approved by owner"
-pnpm run deploy -- runs/<site-id> --bind-domain --publish --force --reason "manual UI approved by owner"
+pnpm run deploy -- runs/<site-id> --bind-domain --publish --force --reason "owner approved first publish"
+pnpm run deploy -- runs/<site-id> --force --reason "manual update approved"
+pnpm run deploy -- runs/<site-id> --draft --force --reason "temporarily hide from indexing"
 ```
 
 Run `pnpm qa` only when explicitly requested.
@@ -147,6 +164,7 @@ After deploy, manually:
 ## Commands
 
 ```bash
+pnpm plan "minecraft skin maker"
 pnpm generate "401k calculator" --domain 401k-calculator.net
 pnpm generate "401k calculator" --domain 401k-calculator.net --deploy
 pnpm qa runs/401k-calculator

@@ -1,9 +1,16 @@
 import type { Page } from "playwright";
+import { is401kCalculator, isCanvasEditorTool } from "../utils/tool-classification";
 
 export type BehaviorAuditResult = {
   passed: boolean;
   checks: Record<string, boolean>;
   issues: string[];
+};
+
+export type BehaviorAuditContext = {
+  keyword?: string;
+  siteId?: string;
+  siteType?: string;
 };
 
 const inputIds = [
@@ -27,7 +34,19 @@ const outputIds = [
   "balance-over-time"
 ];
 
-export async function runBehaviorAudit(page: Page): Promise<BehaviorAuditResult> {
+export async function runBehaviorAudit(
+  page: Page,
+  context: BehaviorAuditContext = {}
+): Promise<BehaviorAuditResult> {
+  if (shouldUse401kBehaviorAudit(context)) return run401kBehaviorAudit(page);
+  return runGenericBehaviorAudit(page, context);
+}
+
+export function shouldUse401kBehaviorAudit(context: BehaviorAuditContext): boolean {
+  return [context.keyword, context.siteId].filter(Boolean).some((value) => is401kCalculator(value ?? ""));
+}
+
+async function run401kBehaviorAudit(page: Page): Promise<BehaviorAuditResult> {
   const checks: Record<string, boolean> = {};
   const issues: string[] = [];
 
@@ -82,6 +101,123 @@ export async function runBehaviorAudit(page: Page): Promise<BehaviorAuditResult>
   }
 
   return { passed: issues.length === 0, checks, issues };
+}
+
+async function runGenericBehaviorAudit(
+  page: Page,
+  context: BehaviorAuditContext
+): Promise<BehaviorAuditResult> {
+  const checks: Record<string, boolean> = {};
+  const issues: string[] = [];
+
+  checks.main_exists = await page.locator("main").count().then((count) => count >= 1);
+  checks.interactive_control_exists = await page
+    .locator("button,input,select,textarea,canvas")
+    .count()
+    .then((count) => count >= 1);
+
+  const canvasCount = await page.locator("canvas").count();
+  if (canvasCount > 0) {
+    checks.canvas_visible_with_size = await hasVisibleSizedCanvas(page);
+  }
+
+  checks.download_export_click_no_console_error = await clickOptionalActionWithoutConsoleError(
+    page,
+    /download|export/i
+  );
+  checks.reset_clear_new_click_no_console_error = await clickOptionalActionWithoutConsoleError(
+    page,
+    /reset|clear|new/i
+  );
+
+  if (isCanvasEditorTool(context)) {
+    checks.canvas_editor_has_canvas = canvasCount > 0;
+    checks.canvas_editor_has_edit_or_file_control = await hasCanvasEditorControl(page);
+    checks.canvas_editor_has_local_only_copy = await hasLocalOnlyCopy(page);
+  }
+
+  for (const [name, passed] of Object.entries(checks)) {
+    if (!passed) issues.push(`Behavior check failed: ${name}`);
+  }
+
+  return { passed: issues.length === 0, checks, issues };
+}
+
+async function hasVisibleSizedCanvas(page: Page): Promise<boolean> {
+  const canvases = page.locator("canvas");
+  const count = await canvases.count();
+  for (let index = 0; index < count; index++) {
+    const canvas = canvases.nth(index);
+    if (!(await canvas.isVisible())) continue;
+    const box = await canvas.boundingBox();
+    if (box && box.width > 0 && box.height > 0) return true;
+  }
+  return false;
+}
+
+async function clickOptionalActionWithoutConsoleError(page: Page, labelPattern: RegExp): Promise<boolean> {
+  const action = await findActionControl(page, labelPattern);
+  if (!action) return true;
+
+  const consoleErrors: string[] = [];
+  const onConsole = (message: { type(): string; text(): string }) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  };
+  const onPageError = (error: Error) => consoleErrors.push(error.message);
+
+  page.on("console", onConsole);
+  page.on("pageerror", onPageError);
+  try {
+    await Promise.all([
+      page.waitForEvent("download", { timeout: 750 }).catch(() => undefined),
+      action.click({ timeout: 2000 })
+    ]);
+    await page.waitForTimeout(100);
+    return consoleErrors.length === 0;
+  } catch {
+    return false;
+  } finally {
+    page.off("console", onConsole);
+    page.off("pageerror", onPageError);
+  }
+}
+
+async function findActionControl(page: Page, labelPattern: RegExp) {
+  const controls = page.locator("button,a,label");
+  const count = await controls.count();
+  for (let index = 0; index < count; index++) {
+    const control = controls.nth(index);
+    const text = await control.textContent().catch(() => "");
+    if (labelPattern.test(text ?? "") && (await control.isVisible().catch(() => false))) {
+      return control;
+    }
+  }
+  return undefined;
+}
+
+async function hasCanvasEditorControl(page: Page): Promise<boolean> {
+  const text = await page
+    .locator("button,label,input,select")
+    .evaluateAll((elements) =>
+      elements
+        .map((element) =>
+          [
+            element.id,
+            element.getAttribute("aria-label"),
+            element.getAttribute("for"),
+            element.textContent
+          ]
+            .filter(Boolean)
+            .join(" ")
+        )
+        .join(" ")
+    );
+  return /draw|edit|import|export|download/i.test(text);
+}
+
+async function hasLocalOnlyCopy(page: Page): Promise<boolean> {
+  const text = await page.locator("body").innerText();
+  return /local|browser|no upload|not uploaded|no sign[- ]?up|private/i.test(text);
 }
 
 async function assertResultChanges(

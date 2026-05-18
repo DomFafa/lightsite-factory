@@ -17,9 +17,24 @@ export type DeployOptions = {
   indexnow?: boolean;
   bindDomain?: boolean;
   publish?: boolean;
+  draft?: boolean;
   replaceDns?: boolean;
   reason?: string;
 };
+
+export function resolveDeployIndexingState(args: {
+  current?: IndexingState;
+  publish?: boolean;
+  draft?: boolean;
+}): IndexingState {
+  if (args.publish && args.draft) {
+    throw new Error("Use either --publish or --draft, not both.");
+  }
+  if (args.publish) return "published";
+  if (args.draft) return "draft";
+  if (args.current === "published") return "published";
+  return "draft";
+}
 
 export async function deployRun(runPath: string, options: DeployOptions = {}): Promise<void> {
   const paths = getRunPaths(runPath);
@@ -38,9 +53,13 @@ export async function deployRun(runPath: string, options: DeployOptions = {}): P
     throw new Error("QA did not pass. Use --force to deploy anyway and record forced: true.");
   }
 
-  const indexingState: IndexingState = options.publish ? "published" : "draft";
-  if (options.publish && !run.domain) {
-    throw new Error("--publish requires run.json.domain");
+  const indexingState = resolveDeployIndexingState({
+    current: run.indexing_state,
+    publish: options.publish,
+    draft: options.draft
+  });
+  if (indexingState === "published" && !run.domain) {
+    throw new Error("Published deploys require run.json.domain.");
   }
   applyIndexingState({
     siteDir: paths.siteDir,

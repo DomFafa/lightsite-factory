@@ -1,0 +1,29 @@
+{
+  "name": "lightsite-factory",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.2",
+  "type": "module",
+  "scripts": {
+    "generate": "tsx src/cli.ts generate",
+    "qa": "tsx src/cli.ts qa",
+    "repair-prompt": "tsx src/cli.ts repair-prompt",
+    "preview": "tsx src/cli.ts preview",
+    "deploy": "tsx src/cli.ts deploy",
+    "indexnow": "tsx src/cli.ts indexnow",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/**/*.test.ts"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "openai": "^4.104.0",
+    "playwright": "^1.52.0",
+    "wrangler": "^4.14.4",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

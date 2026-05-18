@@ -6,6 +6,11 @@
     "H1 and subtitle should belong to one visual text group.",
     "Section labels should feel like integrated UI tokens/cards, not generic uppercase badges.",
     "UI tokens such as section pills and privacy pills should be compact and must not compete with the primary tool.",
+    "H1 should be strong but not oversized compared with the actual tool.",
+    "Section pills, hero chips, and privacy pills should be compact UI tokens.",
+    "Section labels should support hierarchy without competing with tool controls.",
+    "Decorative illustration should not overpower the main tool.",
+    "Utility buttons should be smaller than primary action buttons and result values.",
     "Manual visual edits must not automatically trigger QA unless the user explicitly asks."
   ],
   "calculator_family_rules": [
@@ -13,7 +18,8 @@
     "Inputs and outputs should be visually connected.",
     "Supporting sections should share one consistent section label system.",
     "Reset and helper controls should be visually smaller than primary results and form headings.",
-    "Helper content should not push the real calculator too far down."
+    "Helper content should not push the real calculator too far down.",
+    "Reset and helper controls should stay smaller than primary results."
   ],
   "sample_specific_rules": [
     "Use \"401(k) Calculator\" as the main H1.",
@@ -23,10 +29,6 @@
     "Use numbered pill/card section labels: 01 Your assumptions, 02 Projection table, 03 Plain-English method, 04 Quick guide, 05 Questions."
   ],
   "confirmed_sizing_rules": [
-    "Use calmer H1 sizing around clamp(2rem, 3.7vw, 3.35rem) instead of oversized marketing-hero scale.",
-    "Use compact numbered section pills around 0.74rem text with 0.24rem 0.48rem padding, small dots, and light shadows.",
-    "Use a compact local-only privacy pill around 0.88rem text with reduced padding and a lighter shadow.",
-    "Use a smaller reset button around 0.9rem text and 38px minimum height so it does not overpower the form header.",
     "Keep financial output numbers prominent; shrink headings, pills, and utility controls before shrinking primary result values."
   ]
 }

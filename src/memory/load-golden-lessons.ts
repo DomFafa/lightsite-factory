@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
+import { inferToolFamily } from "../tooling/tool-family";
 
 const GoldenRulesSchema = z.object({
   global_rules: z.array(z.string()).default([]),
@@ -24,10 +25,9 @@ export function loadGoldenLessons(args: {
 }): GoldenQualityLessons {
   const cwd = args.cwd ?? process.cwd();
   const samplesDir = path.join(cwd, "examples", "golden-samples");
-  const keyword = args.keyword.toLowerCase();
-  const siteType = args.siteType?.toLowerCase() ?? "";
-  const isCalculator = keyword.includes("calculator") || siteType.includes("calculator");
-  const is401k = /\b401\s*\(?k\)?\b/.test(keyword) && keyword.includes("calculator");
+  const family = inferToolFamily({ keyword: args.keyword, siteType: args.siteType });
+  const isCalculator =
+    family.primary === "calculator" || family.primary === "finance-calculator";
 
   const result: GoldenQualityLessons = {
     global_rules: [],
@@ -54,7 +54,7 @@ export function loadGoldenLessons(args: {
       result.confirmed_sizing_rules.push(...rules.confirmed_sizing_rules);
     }
 
-    if (is401k && sampleName === "401k-calculator") {
+    if (family.is401k && sampleName === "401k-calculator") {
       result.sample_specific_rules.push(...rules.sample_specific_rules);
     }
   }

@@ -12,6 +12,11 @@ export type RunPaths = {
   uiFingerprintJson: string;
   indexnowJson: string;
   siteDir: string;
+  designDir: string;
+  designTargetPrompt: string;
+  designTargetDesktop: string;
+  designTargetManifest: string;
+  usageJsonl: string;
   screenshotsDir: string;
   qaDir: string;
   repairDir: string;
@@ -35,6 +40,11 @@ export function getRunPaths(runPathOrSiteId: string, cwd = process.cwd()): RunPa
     uiFingerprintJson: path.join(runDir, "ui-fingerprint.json"),
     indexnowJson: path.join(runDir, "indexnow.json"),
     siteDir: path.join(runDir, "site"),
+    designDir: path.join(runDir, "design"),
+    designTargetPrompt: path.join(runDir, "design", "design-target-prompt.md"),
+    designTargetDesktop: path.join(runDir, "design", "target-desktop.png"),
+    designTargetManifest: path.join(runDir, "design", "target-manifest.json"),
+    usageJsonl: path.join(runDir, "usage.jsonl"),
     screenshotsDir: path.join(runDir, "screenshots"),
     qaDir: path.join(runDir, "qa"),
     repairDir: path.join(runDir, "repair"),

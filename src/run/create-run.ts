@@ -17,6 +17,7 @@ export function createRun(options: CreateRunOptions): { run: RunMeta; runDir: st
 
   ensureDir(paths.runDir);
   ensureDir(paths.siteDir);
+  ensureDir(paths.designDir);
   ensureDir(paths.qaDir);
   ensureDir(paths.screenshotsDir);
   ensureDir(paths.repairDir);

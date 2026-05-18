@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { z } from "zod";
 import { getEnv, loadEnv, requireEnv } from "../utils/env";
+import { appendTextUsage, type TextUsageRecord } from "./usage";
 
 export type StructuredJsonRequest<T> = {
   modelEnv?: string;
@@ -8,6 +9,8 @@ export type StructuredJsonRequest<T> = {
   jsonSchema: unknown;
   zodSchema: z.ZodType<T>;
   messages: Array<{ role: "system" | "user"; content: unknown }>;
+  runDir?: string;
+  stage?: TextUsageRecord["stage"];
 };
 
 export async function requestStructuredJson<T>(
@@ -30,6 +33,15 @@ export async function requestStructuredJson<T>(
       json_schema: request.jsonSchema as never
     }
   });
+
+  if (request.runDir && request.stage) {
+    appendTextUsage({
+      runDir: request.runDir,
+      stage: request.stage,
+      model,
+      usage: response.usage ?? null
+    });
+  }
 
   const content = response.choices[0]?.message?.content;
   if (!content) {

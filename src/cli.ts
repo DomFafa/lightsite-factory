@@ -32,11 +32,19 @@ program
   .option("--domain <domain>")
   .option("--language <language>", "Site language", "en")
   .option("--deploy", "Run QA and deploy after generation")
-  .action(async (keyword: string, options: { domain?: string; language?: string; deploy?: boolean }) => {
+  .option("--code-only", "Skip image design target and use text-only site generation")
+  .option("--allow-complex", "Allow complex tools to continue beyond planning")
+  .option("--design-only", "Generate planning and design target only")
+  .option("--reuse-design", "Reuse an existing design/target-desktop.png if present")
+  .action(async (keyword: string, options: { domain?: string; language?: string; deploy?: boolean; codeOnly?: boolean; allowComplex?: boolean; designOnly?: boolean; reuseDesign?: boolean }) => {
     const runDir = await generateSite({
       keyword,
       domain: options.domain,
-      language: options.language
+      language: options.language,
+      codeOnly: options.codeOnly,
+      allowComplex: options.allowComplex,
+      designOnly: options.designOnly,
+      reuseDesign: options.reuseDesign
     });
     if (options.deploy) {
       await runQa(runDir);

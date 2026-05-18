@@ -27,10 +27,19 @@ export const SeoPlanSchema = z.object({
 });
 
 export const ToolSpecSchema = z.object({
+  tool_family: z.string().min(1),
+  complexity: z.enum(["simple", "medium", "complex"]),
   inputs: z.array(z.string().min(1)).min(1),
   outputs: z.array(z.string().min(1)).min(1),
-  formula_summary: z.string().min(1),
-  disclaimer: z.string().min(1)
+  controls: z.array(z.string().min(1)).min(1),
+  primary_actions: z.array(z.string().min(1)).min(1),
+  secondary_actions: z.array(z.string().min(1)),
+  states: z.array(z.string().min(1)).min(1),
+  validation_rules: z.array(z.string().min(1)).min(1),
+  local_only_requirements: z.array(z.string().min(1)),
+  disclaimer: z.string().min(1),
+  implementation_notes: z.array(z.string().min(1)).min(1),
+  formula_summary: z.string().min(1).nullable().optional()
 });
 
 export const PlanningArtifactsSchema = z.object({
@@ -136,12 +145,35 @@ export const planningArtifactsJsonSchema = {
       tool_spec: {
         type: "object",
         additionalProperties: false,
-        required: ["inputs", "outputs", "formula_summary", "disclaimer"],
+        required: [
+          "tool_family",
+          "complexity",
+          "inputs",
+          "outputs",
+          "controls",
+          "primary_actions",
+          "secondary_actions",
+          "states",
+          "validation_rules",
+          "local_only_requirements",
+          "disclaimer",
+          "implementation_notes",
+          "formula_summary"
+        ],
         properties: {
+          tool_family: { type: "string" },
+          complexity: { type: "string", enum: ["simple", "medium", "complex"] },
           inputs: { type: "array", items: { type: "string" } },
           outputs: { type: "array", items: { type: "string" } },
-          formula_summary: { type: "string" },
-          disclaimer: { type: "string" }
+          controls: { type: "array", items: { type: "string" } },
+          primary_actions: { type: "array", items: { type: "string" } },
+          secondary_actions: { type: "array", items: { type: "string" } },
+          states: { type: "array", items: { type: "string" } },
+          validation_rules: { type: "array", items: { type: "string" } },
+          local_only_requirements: { type: "array", items: { type: "string" } },
+          disclaimer: { type: "string" },
+          implementation_notes: { type: "array", items: { type: "string" } },
+          formula_summary: { type: ["string", "null"] }
         }
       },
       ui_fingerprint: {

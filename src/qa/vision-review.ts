@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 import { getEnv, loadEnv } from "../utils/env";
 import { writeJson } from "../utils/json";
 import { readPrompt } from "../llm/prompts";
@@ -50,6 +51,8 @@ export async function runVisionReview(args: {
       schemaName: "UX vision review",
       jsonSchema: visionReviewJsonSchema,
       zodSchema: VisionReviewSchema,
+      runDir: path.dirname(path.dirname(args.outputPath)),
+      stage: "vision-review",
       messages: [
         {
           role: "system",

@@ -1,0 +1,28 @@
+{
+  "keyword": "minecraft skin maker",
+  "site_id": "minecraft-skin-maker",
+  "status": "failed_sample",
+  "review_type": "manual_ui_review",
+  "failed_at": "2026-05-18T09:40:00.000Z",
+  "primary_failure": "Generated result felt too weak visually and product-wise for a complex canvas editor.",
+  "what_worked": [
+    "401k-specific prompt leakage was removed on the second generation attempt.",
+    "Generated site had canvas editing, paint controls, import/export, and preview basics.",
+    "Desktop and mobile smoke checks had no console errors."
+  ],
+  "what_failed": [
+    "The tool type is too complex for the current lightweight single-pass generation path.",
+    "The generated UI felt like an approximation rather than a polished creative tool.",
+    "Basic controls were not enough to make the page feel trustworthy or worth deploying."
+  ],
+  "do_not_use_as": [
+    "golden sample",
+    "template",
+    "deployable reference"
+  ],
+  "future_direction": [
+    "Use plan preflight before attempting complex canvas editors.",
+    "Prefer a narrower Minecraft-related tool for Phase 2 validation.",
+    "Only revisit a full skin maker with a tighter handcrafted interaction spec."
+  ]
+}
